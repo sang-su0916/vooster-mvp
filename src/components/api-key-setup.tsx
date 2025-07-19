@@ -140,7 +140,7 @@ export function ApiKeySetup({ onApiKeySet, currentApiKey }: ApiKeySetupProps) {
           <span>Google Gemini API 키 설정</span>
         </CardTitle>
         <CardDescription>
-          AI 서류 생성을 위해 개인 Gemini API 키를 입력해주세요. 
+          ⚠️ <strong>필수:</strong> AI 서류 생성을 위해 개인 Gemini API 키를 먼저 입력해주세요. 
           키는 브라우저에만 저장되며 외부로 전송되지 않습니다.
         </CardDescription>
       </CardHeader>

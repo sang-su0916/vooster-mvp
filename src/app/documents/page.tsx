@@ -124,9 +124,12 @@ export default function DocumentsPage() {
         description: `${requestedDocumentType}이(가) 성공적으로 생성되었습니다.`,
       });
     } catch (error) {
+      console.error('Document generation error:', error);
       toast({
-        title: '생성 실패',
-        description: error instanceof Error ? error.message : '서류 생성 중 오류가 발생했습니다.',
+        title: '서류 생성 실패',
+        description: error instanceof Error ? 
+          error.message : 
+          'API 키가 올바르지 않거나 서버 오류가 발생했습니다. API 키를 확인해주세요.',
         variant: 'destructive',
       });
     } finally {
@@ -387,18 +390,18 @@ export default function DocumentsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="documentType">서류 종류</Label>
-                <Select onValueChange={handleDocumentTypeChange}>
+                <Label htmlFor="documentType">서류 종류 *</Label>
+                <Select value={documentType} onValueChange={handleDocumentTypeChange}>
                   <SelectTrigger>
-                    <SelectValue placeholder="서류를 선택하세요" />
+                    <SelectValue placeholder="⭐ 생성할 서류를 선택하세요" />
                   </SelectTrigger>
                   <SelectContent>
                     {commonDocumentTypes.map((doc) => (
                       <SelectItem key={doc} value={doc}>
-                        {doc}
+                        📄 {doc}
                       </SelectItem>
                     ))}
-                    <SelectItem value="custom">직접 입력</SelectItem>
+                    <SelectItem value="custom">✏️ 직접 입력</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -431,13 +434,26 @@ export default function DocumentsPage() {
               
               <Button 
                 onClick={handleGenerateDocument} 
-                disabled={isLoading}
+                disabled={isLoading || !apiKey || !documentType}
                 className="w-full"
                 size="lg"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                {isLoading ? 'AI 생성 중...' : 'AI로 서류 생성'}
+                {isLoading ? 'AI 생성 중...' : 
+                 !apiKey ? 'API 키를 먼저 설정하세요' :
+                 !documentType ? '서류를 선택하세요' :
+                 'AI로 서류 생성'}
               </Button>
+              
+              {(!apiKey || !documentType) && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+                  <div className="font-medium text-yellow-800 mb-1">🚨 생성 전 확인사항:</div>
+                  <ul className="text-yellow-700 space-y-1">
+                    {!apiKey && <li>• ⬆️ 위에서 Gemini API 키를 먼저 설정해주세요</li>}
+                    {!documentType && <li>• ⬆️ 생성할 서류 종류를 선택해주세요</li>}
+                  </ul>
+                </div>
+              )}
               
               {generatedDocument && (
                 <div className="space-y-4 pt-4 border-t">
