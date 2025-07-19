@@ -75,8 +75,11 @@ export default function DocumentsPage() {
   };
 
   const handleGenerateDocument = async () => {
+    console.log('🚀 Generate document clicked!', { apiKey: !!apiKey, documentType, companyInfo, employeeInfo });
+    
     // API 키 검증
     if (!apiKey) {
+      console.error('❌ No API key');
       toast({
         title: 'API 키 필요',
         description: 'Google Gemini API 키를 먼저 설정해주세요.',
@@ -433,8 +436,14 @@ export default function DocumentsPage() {
               )}
               
               <Button 
-                onClick={handleGenerateDocument} 
-                disabled={isLoading || !apiKey || !documentType}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Button clicked!');
+                  handleGenerateDocument();
+                }}
+                disabled={isLoading}
                 className="w-full"
                 size="lg"
               >
@@ -443,6 +452,61 @@ export default function DocumentsPage() {
                  !apiKey ? 'API 키를 먼저 설정하세요' :
                  !documentType ? '서류를 선택하세요' :
                  'AI로 서류 생성'}
+              </Button>
+              
+              {/* 테스트용 버튼 - 디버깅용 */}
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  console.log('Test button clicked!');
+                  toast({
+                    title: '테스트 성공',
+                    description: '버튼 클릭이 정상 작동합니다!',
+                  });
+                }}
+                className="w-full mt-2"
+                size="sm"
+              >
+                🧪 테스트 버튼 (클릭 확인용)
+              </Button>
+              
+              {/* 데모 데이터 자동 입력 버튼 */}
+              <Button 
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setCompanyInfo({
+                    name: '주식회사 테스트',
+                    businessNumber: '123-45-67890',
+                    address: '서울시 강남구 테헤란로 123',
+                    ceo: '김대표',
+                    phone: '02-1234-5678',
+                    email: 'info@test.com'
+                  });
+                  setEmployeeInfo({
+                    name: '홍길동',
+                    employeeId: 'EMP001',
+                    department: '개발팀',
+                    position: '주임',
+                    hireDate: '2024-01-01',
+                    salary: 3500000,
+                    email: 'hong@test.com',
+                    phone: '010-1234-5678',
+                    address: '서울시 마포구 신촌로 123',
+                    birthDate: '1990-01-01',
+                    employmentType: 'permanent'
+                  });
+                  setDocumentType('근로계약서');
+                  toast({
+                    title: '데모 데이터 입력 완료',
+                    description: '테스트를 위한 샘플 데이터가 입력되었습니다.',
+                  });
+                }}
+                className="w-full mt-2"
+                size="sm"
+              >
+                📝 데모 데이터 자동 입력
               </Button>
               
               {(!apiKey || !documentType) && (

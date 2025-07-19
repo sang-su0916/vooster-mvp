@@ -34,6 +34,8 @@ export class GeminiService {
     const prompt = this.createPrompt(companyInfo, employeeInfo, documentType, additionalData);
     
     try {
+      console.log('🤖 Calling Gemini API...', { documentType, hasApiKey: !!useApiKey });
+      
       const response = await fetch(`${this.API_URL}?key=${useApiKey}`, {
         method: 'POST',
         headers: {

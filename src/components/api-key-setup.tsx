@@ -29,6 +29,8 @@ export function ApiKeySetup({ onApiKeySet, currentApiKey }: ApiKeySetupProps) {
   }, [currentApiKey, onApiKeySet]);
 
   const validateAndSaveApiKey = async () => {
+    console.log('🔑 Validating API key...', { keyLength: apiKey.length });
+    
     if (!apiKey.trim()) {
       toast({
         title: '입력 오류',
