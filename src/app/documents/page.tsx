@@ -52,6 +52,14 @@ export default function DocumentsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedDocument, setGeneratedDocument] = useState<GeneratedDocument | null>(null);
   const [apiKey, setApiKey] = useState('');
+
+  // API 키 localStorage에서 자동 로드
+  React.useEffect(() => {
+    const savedKey = localStorage.getItem('gemini_api_key');
+    if (savedKey) {
+      setApiKey(savedKey);
+    }
+  }, []);
   const [additionalData, setAdditionalData] = useState<Record<string, any>>({});
 
   const commonDocumentTypes = GeminiService.getCommonDocumentTypes();
@@ -75,11 +83,18 @@ export default function DocumentsPage() {
   };
 
   const handleGenerateDocument = async () => {
-    console.log('🚀 Generate document clicked!', { apiKey: !!apiKey, documentType, companyInfo, employeeInfo });
+    console.log('🚀 Generate document clicked!', { 
+      apiKey: !!apiKey, 
+      documentType, 
+      companyInfo: !!companyInfo.name, 
+      employeeInfo: !!employeeInfo.name 
+    });
     
-    // API 키 검증
-    if (!apiKey) {
-      console.error('❌ No API key');
+    // 실시간 API 키 재확인
+    const currentApiKey = apiKey || localStorage.getItem('gemini_api_key');
+    
+    if (!currentApiKey) {
+      console.error('❌ No API key found');
       toast({
         title: 'API 키 필요',
         description: 'Google Gemini API 키를 먼저 설정해주세요.',
@@ -116,7 +131,7 @@ export default function DocumentsPage() {
         companyInfo,
         employeeInfo,
         requestedDocumentType,
-        apiKey,
+        currentApiKey,
         additionalData
       );
       
@@ -437,12 +452,7 @@ export default function DocumentsPage() {
               
               <Button 
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('Button clicked!');
-                  handleGenerateDocument();
-                }}
+                onClick={handleGenerateDocument}
                 disabled={isLoading}
                 className="w-full"
                 size="lg"
@@ -477,12 +487,12 @@ export default function DocumentsPage() {
                 variant="secondary"
                 onClick={() => {
                   setCompanyInfo({
-                    name: '주식회사 테스트',
+                    name: '엘비즈파트너스',
                     businessNumber: '123-45-67890',
                     address: '서울시 강남구 테헤란로 123',
                     ceo: '김대표',
                     phone: '02-1234-5678',
-                    email: 'info@test.com'
+                    email: 'info@lbizpartners.com'
                   });
                   setEmployeeInfo({
                     name: '홍길동',

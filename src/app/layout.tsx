@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Vooster - AI 서류 생성기',
+  title: '엘비즈파트너스 - AI 서류 생성기',
   description: 'AI 기반 HR 서류 자동 생성 시스템. 근로계약서, 재직증명서 등 법적 기준에 맞는 서류를 간편하게 생성하세요.',
 };
 

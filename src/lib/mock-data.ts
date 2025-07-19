@@ -92,7 +92,7 @@ export const DOCUMENT_TEMPLATES: DocumentTemplate[] = [
 ];
 
 export const COMPANY_INFO = {
-  name: '주식회사 Vooster',
+  name: '엘비즈파트너스',
   address: '서울특별시 강남구 테헤란로 123',
   phone: '02-1234-5678',
   ceo: '김대표',

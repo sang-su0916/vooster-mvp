@@ -13,7 +13,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <FileText className="w-8 h-8 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Vooster</h1>
+            <h1 className="text-2xl font-bold text-gray-900">엘비즈파트너스</h1>
           </div>
           <Button variant="outline" className="hidden md:block">
             로그인
