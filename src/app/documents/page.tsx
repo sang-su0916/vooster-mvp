@@ -82,7 +82,7 @@ export default function DocumentsPage() {
     setAdditionalData({});
   };
 
-  const handleGenerateDocument = useCallback(async (e?: React.MouseEvent) => {
+  const handleGenerateDocument = async (e?: React.MouseEvent) => {
     // 이벤트 전파 방지 및 기본 동작 차단
     if (e) {
       e.preventDefault();
@@ -97,11 +97,14 @@ export default function DocumentsPage() {
       employeeInfo: !!employeeInfo.name 
     });
     
+    alert('🚀 버튼 클릭됨! 서류 생성을 시작합니다...');
+    
     // 실시간 API 키 재확인
     const currentApiKey = apiKey || localStorage.getItem('gemini_api_key');
     
     if (!currentApiKey) {
       console.error('❌ No API key found');
+      alert('❌ API 키가 필요합니다. Google Gemini API 키를 먼저 설정해주세요.');
       toast({
         title: 'API 키 필요',
         description: 'Google Gemini API 키를 먼저 설정해주세요.',
@@ -112,6 +115,7 @@ export default function DocumentsPage() {
 
     // 필수 필드 검증
     if (!companyInfo.name || !companyInfo.ceo || !employeeInfo.name || !employeeInfo.employeeId) {
+      alert('❌ 입력 오류: 회사명, 대표자, 직원명, 사번은 필수 입력 항목입니다.');
       toast({
         title: '입력 오류',
         description: '회사명, 대표자, 직원명, 사번은 필수 입력 항목입니다.',
@@ -123,6 +127,7 @@ export default function DocumentsPage() {
     const requestedDocumentType = documentType === 'custom' ? customDocumentType : documentType;
     
     if (!requestedDocumentType) {
+      alert('❌ 입력 오류: 생성할 서류를 선택하거나 입력해주세요.');
       toast({
         title: '입력 오류',
         description: '생성할 서류를 선택하거나 입력해주세요.',
@@ -132,6 +137,7 @@ export default function DocumentsPage() {
     }
 
     setIsLoading(true);
+    alert('✅ 검증 완료! AI 서류 생성을 시작합니다...');
     
     try {
       const document = await GeminiService.generateDocument(
@@ -143,24 +149,25 @@ export default function DocumentsPage() {
       );
       
       setGeneratedDocument(document);
-      
+      alert(`✅ 서류 생성 완료! ${requestedDocumentType}이(가) 성공적으로 생성되었습니다.`);
       toast({
         title: '서류 생성 완료',
         description: `${requestedDocumentType}이(가) 성공적으로 생성되었습니다.`,
       });
+      
     } catch (error) {
       console.error('Document generation error:', error);
+      const errorMsg = error instanceof Error ? error.message : 'API 키가 올바르지 않거나 서버 오류가 발생했습니다.';
+      alert(`❌ 서류 생성 실패: ${errorMsg}`);
       toast({
         title: '서류 생성 실패',
-        description: error instanceof Error ? 
-          error.message : 
-          'API 키가 올바르지 않거나 서버 오류가 발생했습니다. API 키를 확인해주세요.',
+        description: errorMsg,
         variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
-  }, [apiKey, documentType, companyInfo, employeeInfo, customDocumentType, additionalData, toast]);
+  };
 
 
   return (
@@ -457,25 +464,33 @@ export default function DocumentsPage() {
                 />
               )}
               
+              {/* 메인 AI 서류 생성 버튼 */}
               <Button 
                 type="button"
                 onClick={(e) => {
-                  console.log('🔥 Button onClick fired!', new Date().toISOString());
+                  console.log('🔥 shadcn Button onClick fired!', new Date().toISOString());
                   handleGenerateDocument(e);
                 }}
-                disabled={isLoading || !apiKey || !documentType}
-                className="w-full"
+                disabled={isLoading}
+                className="w-full bg-blue-600 hover:bg-blue-700"
                 size="lg"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                {isLoading 
-                  ? 'AI 생성 중...' 
-                  : !apiKey 
-                  ? 'API 키를 먼저 설정하세요'
-                  : !documentType 
-                  ? '서류를 선택하세요'
-                  : 'AI로 서류 생성'}
+                {isLoading ? 'AI 생성 중...' : 'AI로 서류 생성'}
               </Button>
+              
+              {/* 백업용 HTML 버튼 */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  console.log('🔥 HTML button clicked!', new Date().toISOString());
+                  handleGenerateDocument(e);
+                }}
+                disabled={isLoading}
+                className="w-full mt-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                🚀 백업 버튼: AI 서류 생성
+              </button>
               
               {/* 테스트용 버튼 - 디버깅용 */}
               <Button 
@@ -483,6 +498,7 @@ export default function DocumentsPage() {
                 variant="outline"
                 onClick={() => {
                   console.log('Test button clicked!');
+                  alert('✅ 테스트 성공: 버튼 클릭이 정상 작동합니다!');
                   toast({
                     title: '테스트 성공',
                     description: '버튼 클릭이 정상 작동합니다!',
@@ -521,6 +537,7 @@ export default function DocumentsPage() {
                     employmentType: 'permanent'
                   });
                   setDocumentType('근로계약서');
+                  alert('📝 데모 데이터 입력 완료: 테스트를 위한 샘플 데이터가 입력되었습니다.');
                   toast({
                     title: '데모 데이터 입력 완료',
                     description: '테스트를 위한 샘플 데이터가 입력되었습니다.',
