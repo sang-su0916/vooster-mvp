@@ -1,5 +1,7 @@
 'use client';
 
+// Force client-side rendering for stable event handling
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -60,6 +62,85 @@ export default function DocumentsPage() {
       setApiKey(savedKey);
     }
   }, []);
+
+  // 네이티브 DOM 이벤트 직접 바인딩
+  React.useEffect(() => {
+    const attachButtonEvents = () => {
+      console.log('🔧 Attaching native DOM events...');
+      
+      // 메인 버튼
+      const mainBtn = document.getElementById('main-generate-btn');
+      const backupBtn1 = document.getElementById('backup-btn-1');
+      const backupBtn2 = document.getElementById('backup-btn-2');
+      
+      const handleClick = (buttonName: string) => async (e: Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log(`🚀 ${buttonName} clicked via native DOM event!`, new Date().toISOString());
+        
+        if (isLoading) {
+          console.log('⏸️ Button disabled due to loading state');
+          return;
+        }
+        
+        await handleGenerateDocument();
+      };
+      
+      // 이벤트 리스너 추가
+      if (mainBtn) {
+        mainBtn.addEventListener('click', handleClick('Main Button'));
+        mainBtn.addEventListener('touchstart', handleClick('Main Button (touch)'));
+      }
+      
+      if (backupBtn1) {
+        backupBtn1.addEventListener('click', handleClick('Backup Button 1'));
+        backupBtn1.addEventListener('touchstart', handleClick('Backup Button 1 (touch)'));
+      }
+      
+      if (backupBtn2) {
+        backupBtn2.addEventListener('click', handleClick('Backup Button 2'));
+        backupBtn2.addEventListener('touchstart', handleClick('Backup Button 2 (touch)'));
+      }
+      
+      // 키보드 이벤트도 추가
+      const handleKeyPress = async (e: KeyboardEvent) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          console.log('⌨️ Keyboard shortcut triggered!');
+          e.preventDefault();
+          if (!isLoading) {
+            await handleGenerateDocument();
+          }
+        }
+      };
+      
+      document.addEventListener('keydown', handleKeyPress);
+      
+      // 클린업 함수 반환
+      return () => {
+        if (mainBtn) {
+          mainBtn.removeEventListener('click', handleClick('Main Button'));
+          mainBtn.removeEventListener('touchstart', handleClick('Main Button (touch)'));
+        }
+        if (backupBtn1) {
+          backupBtn1.removeEventListener('click', handleClick('Backup Button 1'));
+          backupBtn1.removeEventListener('touchstart', handleClick('Backup Button 1 (touch)'));
+        }
+        if (backupBtn2) {
+          backupBtn2.removeEventListener('click', handleClick('Backup Button 2'));
+          backupBtn2.removeEventListener('touchstart', handleClick('Backup Button 2 (touch)'));
+        }
+        document.removeEventListener('keydown', handleKeyPress);
+      };
+    };
+    
+    // DOM이 완전히 로드된 후 이벤트 바인딩
+    const timeoutId = setTimeout(attachButtonEvents, 100);
+    
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [isLoading]); // isLoading 변경시 이벤트 재바인딩
   const [additionalData, setAdditionalData] = useState<Record<string, any>>({});
 
   const commonDocumentTypes = GeminiService.getCommonDocumentTypes();
@@ -82,83 +163,87 @@ export default function DocumentsPage() {
     setAdditionalData({});
   };
 
-  const handleGenerateDocument = async (e?: React.MouseEvent) => {
-    // 이벤트 전파 방지 및 기본 동작 차단
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
-    console.log('🚀🚀🚀 BUTTON CLICKED! Generate document started!', { 
+  const handleGenerateDocument = async () => {
+    console.log('🚀🚀🚀 GENERATE DOCUMENT STARTED!', { 
       timestamp: new Date().toISOString(),
-      apiKey: !!apiKey, 
-      documentType, 
-      companyInfo: !!companyInfo.name, 
-      employeeInfo: !!employeeInfo.name 
+      isLoading,
+      hasApiKey: !!apiKey,
+      hasDocumentType: !!documentType,
+      hasCompanyName: !!companyInfo.name,
+      hasEmployeeName: !!employeeInfo.name
     });
     
-    alert('🚀 버튼 클릭됨! 서류 생성을 시작합니다...');
-    
-    // 실시간 API 키 재확인
-    const currentApiKey = apiKey || localStorage.getItem('gemini_api_key');
-    
-    if (!currentApiKey) {
-      console.error('❌ No API key found');
-      alert('❌ API 키가 필요합니다. Google Gemini API 키를 먼저 설정해주세요.');
-      toast({
-        title: 'API 키 필요',
-        description: 'Google Gemini API 키를 먼저 설정해주세요.',
-        variant: 'destructive',
-      });
+    // 로딩 중이면 중복 실행 방지
+    if (isLoading) {
+      console.log('⏸️ Already loading, skipping...');
       return;
     }
-
-    // 필수 필드 검증
-    if (!companyInfo.name || !companyInfo.ceo || !employeeInfo.name || !employeeInfo.employeeId) {
-      alert('❌ 입력 오류: 회사명, 대표자, 직원명, 사번은 필수 입력 항목입니다.');
-      toast({
-        title: '입력 오류',
-        description: '회사명, 대표자, 직원명, 사번은 필수 입력 항목입니다.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const requestedDocumentType = documentType === 'custom' ? customDocumentType : documentType;
     
-    if (!requestedDocumentType) {
-      alert('❌ 입력 오류: 생성할 서류를 선택하거나 입력해주세요.');
-      toast({
-        title: '입력 오류',
-        description: '생성할 서류를 선택하거나 입력해주세요.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+    alert('🚀 AI 서류 생성을 시작합니다!');
     setIsLoading(true);
-    alert('✅ 검증 완료! AI 서류 생성을 시작합니다...');
     
     try {
+      // 실시간 데이터 수집 및 검증
+      const currentApiKey = apiKey || localStorage.getItem('gemini_api_key');
+      const currentCompanyInfo = companyInfo;
+      const currentEmployeeInfo = employeeInfo;
+      const currentDocumentType = documentType === 'custom' ? customDocumentType : documentType;
+      
+      console.log('📋 Current form data:', {
+        apiKey: !!currentApiKey,
+        companyName: currentCompanyInfo.name,
+        ceo: currentCompanyInfo.ceo,
+        employeeName: currentEmployeeInfo.name,
+        employeeId: currentEmployeeInfo.employeeId,
+        documentType: currentDocumentType
+      });
+      
+      // API 키 검증
+      if (!currentApiKey) {
+        throw new Error('Google Gemini API 키가 필요합니다. 사이드바에서 API 키를 설정해주세요.');
+      }
+      
+      // 필수 필드 검증
+      if (!currentCompanyInfo.name) {
+        throw new Error('회사명을 입력해주세요.');
+      }
+      if (!currentCompanyInfo.ceo) {
+        throw new Error('대표자명을 입력해주세요.');
+      }
+      if (!currentEmployeeInfo.name) {
+        throw new Error('직원 성명을 입력해주세요.');
+      }
+      if (!currentEmployeeInfo.employeeId) {
+        throw new Error('사번을 입력해주세요.');
+      }
+      if (!currentDocumentType) {
+        throw new Error('생성할 서류를 선택해주세요.');
+      }
+      
+      console.log('✅ All validations passed, generating document...');
+      
+      // 문서 생성
       const document = await GeminiService.generateDocument(
-        companyInfo,
-        employeeInfo,
-        requestedDocumentType,
+        currentCompanyInfo,
+        currentEmployeeInfo,
+        currentDocumentType,
         currentApiKey,
         additionalData
       );
       
       setGeneratedDocument(document);
-      alert(`✅ 서류 생성 완료! ${requestedDocumentType}이(가) 성공적으로 생성되었습니다.`);
+      
+      alert(`✅ 성공! ${currentDocumentType}이(가) 생성되었습니다.`);
       toast({
         title: '서류 생성 완료',
-        description: `${requestedDocumentType}이(가) 성공적으로 생성되었습니다.`,
+        description: `${currentDocumentType}이(가) 성공적으로 생성되었습니다.`,
       });
       
     } catch (error) {
-      console.error('Document generation error:', error);
-      const errorMsg = error instanceof Error ? error.message : 'API 키가 올바르지 않거나 서버 오류가 발생했습니다.';
-      alert(`❌ 서류 생성 실패: ${errorMsg}`);
+      console.error('❌ Document generation error:', error);
+      const errorMsg = error instanceof Error ? error.message : '서류 생성 중 오류가 발생했습니다.';
+      
+      alert(`❌ 오류: ${errorMsg}`);
       toast({
         title: '서류 생성 실패',
         description: errorMsg,
@@ -166,6 +251,7 @@ export default function DocumentsPage() {
       });
     } finally {
       setIsLoading(false);
+      console.log('🏁 Document generation process completed');
     }
   };
 
@@ -464,33 +550,63 @@ export default function DocumentsPage() {
                 />
               )}
               
-              {/* 메인 AI 서류 생성 버튼 */}
-              <Button 
+              {/* 네이티브 HTML 메인 버튼 */}
+              <button
+                id="main-generate-btn"
                 type="button"
-                onClick={(e) => {
-                  console.log('🔥 shadcn Button onClick fired!', new Date().toISOString());
-                  handleGenerateDocument(e);
-                }}
-                disabled={isLoading}
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                size="lg"
+                className={`
+                  w-full h-11 px-8 
+                  inline-flex items-center justify-center 
+                  whitespace-nowrap rounded-md text-sm font-medium 
+                  transition-colors focus-visible:outline-none 
+                  focus-visible:ring-2 focus-visible:ring-blue-500 
+                  focus-visible:ring-offset-2
+                  ${isLoading 
+                    ? 'bg-blue-400 cursor-not-allowed' 
+                    : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
+                  }
+                  text-white shadow-lg
+                `}
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                {isLoading ? 'AI 생성 중...' : 'AI로 서류 생성'}
-              </Button>
-              
-              {/* 백업용 HTML 버튼 */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  console.log('🔥 HTML button clicked!', new Date().toISOString());
-                  handleGenerateDocument(e);
-                }}
-                disabled={isLoading}
-                className="w-full mt-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                🚀 백업 버튼: AI 서류 생성
+                {isLoading ? 'AI 생성 중...' : '🚀 AI로 서류 생성'}
               </button>
+              
+              {/* 백업 버튼 1 */}
+              <button
+                id="backup-btn-1"
+                type="button"
+                className={`
+                  w-full mt-2 h-10 px-6
+                  inline-flex items-center justify-center
+                  rounded-lg text-sm font-medium
+                  transition-all duration-200
+                  ${isLoading 
+                    ? 'bg-green-400 cursor-not-allowed' 
+                    : 'bg-green-600 hover:bg-green-700 cursor-pointer'
+                  }
+                  text-white border-0 outline-0
+                `}
+              >
+                🔄 백업 생성 버튼
+              </button>
+              
+              {/* 백업 버튼 2 - 완전히 다른 스타일 */}
+              <div 
+                id="backup-btn-2"
+                className={`
+                  w-full mt-2 p-3 text-center
+                  border-2 border-purple-600 rounded-lg
+                  font-medium cursor-pointer
+                  transition-all duration-200
+                  ${isLoading 
+                    ? 'bg-purple-100 text-purple-400 cursor-not-allowed border-purple-300' 
+                    : 'bg-white text-purple-600 hover:bg-purple-50'
+                  }
+                `}
+              >
+                ⚡ 세 번째 생성 버튼
+              </div>
               
               {/* 테스트용 버튼 - 디버깅용 */}
               <Button 
@@ -549,8 +665,19 @@ export default function DocumentsPage() {
                 📝 데모 데이터 자동 입력
               </Button>
               
+              {/* 사용법 안내 */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm mt-4">
+                <div className="font-medium text-blue-800 mb-2">🎯 사용법 안내:</div>
+                <ul className="text-blue-700 space-y-1">
+                  <li>• 3개의 버튼 중 아무거나 클릭하여 서류 생성</li>
+                  <li>• 키보드 단축키: <kbd className="bg-blue-200 px-2 py-1 rounded">Ctrl+Enter</kbd></li>
+                  <li>• 모바일: 터치 이벤트도 지원</li>
+                  <li>• 문제 발생 시: 새로고침 후 다시 시도</li>
+                </ul>
+              </div>
+              
               {(!apiKey || !documentType) && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm mt-2">
                   <div className="font-medium text-yellow-800 mb-1">🚨 생성 전 확인사항:</div>
                   <ul className="text-yellow-700 space-y-1">
                     {!apiKey && <li>• ⬆️ 위에서 Gemini API 키를 먼저 설정해주세요</li>}
