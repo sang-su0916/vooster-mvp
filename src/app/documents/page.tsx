@@ -68,10 +68,11 @@ export default function DocumentsPage() {
     const attachButtonEvents = () => {
       console.log('🔧 Attaching native DOM events...');
       
-      // 메인 버튼
+      // 모든 버튼들
       const mainBtn = document.getElementById('main-generate-btn');
       const backupBtn1 = document.getElementById('backup-btn-1');
       const backupBtn2 = document.getElementById('backup-btn-2');
+      const nativeBtn = document.getElementById('native-btn');
       
       const handleClick = (buttonName: string) => async (e: Event) => {
         e.preventDefault();
@@ -103,6 +104,11 @@ export default function DocumentsPage() {
         backupBtn2.addEventListener('touchstart', handleClick('Backup Button 2 (touch)'));
       }
       
+      if (nativeBtn) {
+        nativeBtn.addEventListener('click', handleClick('Native Button'));
+        nativeBtn.addEventListener('touchstart', handleClick('Native Button (touch)'));
+      }
+      
       // 키보드 이벤트도 추가
       const handleKeyPress = async (e: KeyboardEvent) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -129,6 +135,10 @@ export default function DocumentsPage() {
         if (backupBtn2) {
           backupBtn2.removeEventListener('click', handleClick('Backup Button 2'));
           backupBtn2.removeEventListener('touchstart', handleClick('Backup Button 2 (touch)'));
+        }
+        if (nativeBtn) {
+          nativeBtn.removeEventListener('click', handleClick('Native Button'));
+          nativeBtn.removeEventListener('touchstart', handleClick('Native Button (touch)'));
         }
         document.removeEventListener('keydown', handleKeyPress);
       };
@@ -550,10 +560,17 @@ export default function DocumentsPage() {
                 />
               )}
               
-              {/* 네이티브 HTML 메인 버튼 */}
+              {/* 메인 생성 버튼 - React + DOM 이벤트 하이브리드 */}
               <button
                 id="main-generate-btn"
                 type="button"
+                onClick={(e) => {
+                  console.log('🚀 React onClick fired on main button!');
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleGenerateDocument();
+                }}
+                disabled={isLoading}
                 className={`
                   w-full h-11 px-8 
                   inline-flex items-center justify-center 
@@ -563,19 +580,26 @@ export default function DocumentsPage() {
                   focus-visible:ring-offset-2
                   ${isLoading 
                     ? 'bg-blue-400 cursor-not-allowed' 
-                    : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
+                    : 'bg-blue-600 hover:bg-blue-700 cursor-pointer active:bg-blue-800'
                   }
                   text-white shadow-lg
                 `}
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                {isLoading ? 'AI 생성 중...' : '🚀 AI로 서류 생성'}
+                {isLoading ? '🔄 AI 생성 중...' : '🚀 AI로 서류 생성'}
               </button>
               
-              {/* 백업 버튼 1 */}
+              {/* 백업 버튼 1 - React 이벤트 */}
               <button
                 id="backup-btn-1"
                 type="button"
+                onClick={(e) => {
+                  console.log('🔄 React onClick fired on backup button 1!');
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleGenerateDocument();
+                }}
+                disabled={isLoading}
                 className={`
                   w-full mt-2 h-10 px-6
                   inline-flex items-center justify-center
@@ -583,7 +607,7 @@ export default function DocumentsPage() {
                   transition-all duration-200
                   ${isLoading 
                     ? 'bg-green-400 cursor-not-allowed' 
-                    : 'bg-green-600 hover:bg-green-700 cursor-pointer'
+                    : 'bg-green-600 hover:bg-green-700 cursor-pointer active:bg-green-800'
                   }
                   text-white border-0 outline-0
                 `}
@@ -591,22 +615,59 @@ export default function DocumentsPage() {
                 🔄 백업 생성 버튼
               </button>
               
-              {/* 백업 버튼 2 - 완전히 다른 스타일 */}
+              {/* 백업 버튼 2 - div 클릭 */}
               <div 
                 id="backup-btn-2"
+                onClick={(e) => {
+                  console.log('⚡ React onClick fired on backup div button!');
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!isLoading) {
+                    handleGenerateDocument();
+                  }
+                }}
                 className={`
                   w-full mt-2 p-3 text-center
                   border-2 border-purple-600 rounded-lg
-                  font-medium cursor-pointer
+                  font-medium 
                   transition-all duration-200
                   ${isLoading 
                     ? 'bg-purple-100 text-purple-400 cursor-not-allowed border-purple-300' 
-                    : 'bg-white text-purple-600 hover:bg-purple-50'
+                    : 'bg-white text-purple-600 hover:bg-purple-50 cursor-pointer active:bg-purple-100'
                   }
                 `}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    if (!isLoading) {
+                      handleGenerateDocument();
+                    }
+                  }
+                }}
               >
                 ⚡ 세 번째 생성 버튼
               </div>
+              
+              {/* 네이티브 HTML 버튼 4 - 순수 DOM 이벤트만 */}
+              <button
+                id="native-btn"
+                type="button"
+                className={`
+                  w-full mt-2 h-10 px-6
+                  inline-flex items-center justify-center
+                  rounded-lg text-sm font-medium
+                  transition-all duration-200
+                  ${isLoading 
+                    ? 'bg-red-400 cursor-not-allowed' 
+                    : 'bg-red-600 hover:bg-red-700 cursor-pointer active:bg-red-800'
+                  }
+                  text-white border-0 outline-0
+                `}
+              >
+                🔥 순수 DOM 이벤트 버튼
+              </button>
               
               {/* 테스트용 버튼 - 디버깅용 */}
               <Button 
@@ -665,14 +726,26 @@ export default function DocumentsPage() {
                 📝 데모 데이터 자동 입력
               </Button>
               
+              {/* 디버깅 정보 */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs mt-4">
+                <div className="font-medium text-gray-800 mb-2">🔍 현재 상태:</div>
+                <ul className="text-gray-600 space-y-1">
+                  <li>• API 키: {apiKey ? '✅ 설정됨' : '❌ 미설정'}</li>
+                  <li>• 서류 타입: {documentType || '❌ 미선택'}</li>
+                  <li>• 회사명: {companyInfo.name || '❌ 미입력'}</li>
+                  <li>• 직원명: {employeeInfo.name || '❌ 미입력'}</li>
+                  <li>• 로딩 상태: {isLoading ? '🔄 로딩 중' : '⭐ 준비됨'}</li>
+                </ul>
+              </div>
+              
               {/* 사용법 안내 */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm mt-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm mt-2">
                 <div className="font-medium text-blue-800 mb-2">🎯 사용법 안내:</div>
                 <ul className="text-blue-700 space-y-1">
-                  <li>• 3개의 버튼 중 아무거나 클릭하여 서류 생성</li>
+                  <li>• 4개의 버튼 중 아무거나 클릭하여 서류 생성</li>
                   <li>• 키보드 단축키: <kbd className="bg-blue-200 px-2 py-1 rounded">Ctrl+Enter</kbd></li>
                   <li>• 모바일: 터치 이벤트도 지원</li>
-                  <li>• 문제 발생 시: 새로고침 후 다시 시도</li>
+                  <li>• 개발자 도구 콘솔에서 로그 확인 가능</li>
                 </ul>
               </div>
               
