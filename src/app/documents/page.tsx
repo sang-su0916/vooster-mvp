@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { FileText, Download, Sparkles, ArrowLeft, Building, User } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { GeminiService } from '@/lib/gemini-service';
@@ -82,8 +82,15 @@ export default function DocumentsPage() {
     setAdditionalData({});
   };
 
-  const handleGenerateDocument = async () => {
-    console.log('🚀 Generate document clicked!', { 
+  const handleGenerateDocument = useCallback(async (e?: React.MouseEvent) => {
+    // 이벤트 전파 방지 및 기본 동작 차단
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    console.log('🚀🚀🚀 BUTTON CLICKED! Generate document started!', { 
+      timestamp: new Date().toISOString(),
       apiKey: !!apiKey, 
       documentType, 
       companyInfo: !!companyInfo.name, 
@@ -153,7 +160,7 @@ export default function DocumentsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [apiKey, documentType, companyInfo, employeeInfo, customDocumentType, additionalData, toast]);
 
 
   return (
@@ -200,7 +207,7 @@ export default function DocumentsPage() {
                 <Label htmlFor="companyName">회사명 *</Label>
                 <Input
                   id="companyName"
-                  placeholder="주식회사 Vooster"
+                  placeholder="엘비즈파트너스"
                   value={companyInfo.name}
                   onChange={(e) => handleCompanyInfoChange('name', e.target.value)}
                 />
@@ -251,7 +258,7 @@ export default function DocumentsPage() {
                 <Input
                   id="companyEmail"
                   type="email"
-                  placeholder="info@vooster.com"
+                  placeholder="info@lbizpartners.com"
                   value={companyInfo.email}
                   onChange={(e) => handleCompanyInfoChange('email', e.target.value)}
                 />
@@ -452,16 +459,22 @@ export default function DocumentsPage() {
               
               <Button 
                 type="button"
-                onClick={handleGenerateDocument}
-                disabled={isLoading}
+                onClick={(e) => {
+                  console.log('🔥 Button onClick fired!', new Date().toISOString());
+                  handleGenerateDocument(e);
+                }}
+                disabled={isLoading || !apiKey || !documentType}
                 className="w-full"
                 size="lg"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                {isLoading ? 'AI 생성 중...' : 
-                 !apiKey ? 'API 키를 먼저 설정하세요' :
-                 !documentType ? '서류를 선택하세요' :
-                 'AI로 서류 생성'}
+                {isLoading 
+                  ? 'AI 생성 중...' 
+                  : !apiKey 
+                  ? 'API 키를 먼저 설정하세요'
+                  : !documentType 
+                  ? '서류를 선택하세요'
+                  : 'AI로 서류 생성'}
               </Button>
               
               {/* 테스트용 버튼 - 디버깅용 */}

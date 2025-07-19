@@ -93,7 +93,7 @@ export default function Home() {
       <footer className="bg-gray-900 text-white py-8 mt-24">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <p className="text-gray-400">
-            © 2024 Vooster. 모든 권리 보유. 프로젝트 F671
+            © 2024 엘비즈파트너스. 모든 권리 보유. 프로젝트 F671
           </p>
         </div>
       </footer>
